@@ -12,6 +12,9 @@ var app = express();
 const port = process.env.PORT;
 app.use(bodyParser.json());
 
+const PDFDocument = require('pdfkit');
+var fs = require('fs');
+
 app.post('/todos', (req, res) => {
     var todo = new Todo({
         text: req.body.text
@@ -24,8 +27,27 @@ app.post('/todos', (req, res) => {
     });
 });
 app.get('/todos', (req, res) => {
-    Todo.find().then((todos) => {
+    // # Create a document
+    doc = new PDFDocument
+
+
+
+
+
+    //    doc.end();
+    var todoData = Todo.find().then((todos) => {
+        //   console.log(todos);
+        var text = todos[0]['text'];
+
+        res.setHeader('Content-type', 'application/pdf');
+        //   doc.pipe(fs.createWriteStream('output.pdf'));
         res.send({ todos });
+
+        doc.pipe(res);
+
+        doc.end();
+
+
     }, (e) => {
         res.status(400).send(e);
     });
@@ -86,6 +108,20 @@ app.patch('/todos/:id', (req, res) => {
     });
 });
 
+
+//POST /users   
+app.post('/users', (req, res) => {
+    var body = _.pick(req.body, ['email', 'password']);
+    var user = new User(body);
+    user.save().then(() => {
+        // res.send(user);
+        return user.generateAuthToken();
+    }).then((token) => {
+        res.header('x-auth', token).send(user);
+    }).catch((e) => {
+        res.status(400).send(e);
+    });
+})
 app.listen(port, () => {
     console.log(`Started on port ${port}`);
 });
